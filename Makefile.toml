@@ -1,0 +1,17 @@
+[tasks.build]
+command = "cross"
+args = ["build", "--target-dir=output", "--target=${@}"]
+
+[tasks.release]
+command = "cross"
+dependencies = ["update", "fixfmt"]
+args = ["build", "--target-dir=output", "--release", "--target=${@}"]
+
+[tasks.fixfmt]
+install_crate = "rustfmt"
+command = "cargo"
+args = ["fmt", "--", "--emit=files"]
+
+[tasks.update]
+command = "cargo"
+args = ["update"]
