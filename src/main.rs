@@ -55,7 +55,8 @@ fn main() -> Result<()> {
 	};
 	let dlmod = std::fs::canonicalize(dlmod)?;
 
-	let dlopen = sec.resolve_symbol_in_mod(&dlmod, "dlopen")?
+	let dlopen = sec
+		.resolve_symbol_in_mod(&dlmod, "dlopen")?
 		.expect("unable to find dlopen");
 
 	log::info!("found dlopen @ {:x}", dlopen.value);
