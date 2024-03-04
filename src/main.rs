@@ -11,16 +11,7 @@ fn main() -> Result<()> {
 		.filter_level(args.verbose.log_level_filter())
 		.init();
 	log::info!("starting");
-	if args.check_update {
-		if let Ok(Some(version)) = check_latest::check_max!() {
-			let msg = format!("version {version} is now available!");
-			log::warn!("{msg}");
-			log::warn!("update with 'cargo install --force pai-inject-so'");
-			return Err(anyhow::Error::msg(msg));
-		} else {
-			log::debug!("already running newest version");
-		}
-	}
+	args.sanity_check()?;
 
 	// Set up our instance
 	let mut cargs = std::mem::take(&mut args.args);
@@ -35,7 +26,8 @@ fn main() -> Result<()> {
 	}
 
 	// Get the canonical path
-	let injectp = args.inject.canonicalize()?;
+	let inject = args.inject.expect("No SO-file passed in --inject");
+	let injectp = inject.canonicalize()?;
 	let inject = injectp
 		.clone()
 		.into_os_string()
@@ -44,7 +36,7 @@ fn main() -> Result<()> {
 
 	// Get a tid we can interact with and resolve dlopen
 	let tid = sec.get_first_stopped()?;
-	let dlopen = sec.lookup_symbol("dlopen")?.expect("unable to find dlopen");
+	let dlopen = sec.lookup_symbol_in_any("dlopen")?.expect("unable to find dlopen");
 	log::info!("found dlopen @ {:x}", dlopen.value);
 
 	// Need to write our string to memory
@@ -75,12 +67,12 @@ fn main() -> Result<()> {
 	// Override all GOT entries the user specified
 	let exe = sec.proc.exe_path()?;
 	for hook in args.r#override.into_iter() {
-		log::info!("hooking signal {hook}");
+		log::info!("hooking fucntion {hook}");
 		let fake = sec
-			.resolve_symbol(&injectp, &hook)?
-			.expect("unable to find signal");
+			.resolve_symbol_in_mod(&injectp, &hook)?
+			.expect("unable to find matching function in SO-file");
 		log::info!("hooking '{hook}' with addr: {:x}", fake.value);
-		sec.write_got(tid, &exe, &hook, fake.value)?;
+		sec.overwrite_got_symbol(tid, &exe, &hook, fake.value)?;
 	}
 
 	// Free up the memory we allocated and detach

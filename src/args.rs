@@ -35,24 +35,57 @@ pub struct Args {
 	#[arg(short, long)]
 	pub attach: bool,
 
-	/// Check if a new version is available when starting
-	#[arg(long)]
+	/// Check for update when starting and exit if this is not the newest
+	/// version.
+	#[arg(long, verbatim_doc_comment)]
 	pub check_update: bool,
 
 	/// The SO-file to inject
 	#[arg(long, short)]
-	pub inject: PathBuf,
+	pub inject: Option<PathBuf>,
 
+	/// Flags to pass to `dlopen`
 	#[arg(long, short, default_value_t = Flags::default())]
 	pub flags: Flags,
 
-	#[arg(long, short)]
+	/// For each function provided, we will override the GOT entry so that the
+	/// function with the same in the SO-file will be executed in place of the
+	/// original function.
+	#[arg(long, short, verbatim_doc_comment)]
 	pub r#override: Vec<String>,
 
-	#[arg(long)]
-	pub listen: Option<std::net::SocketAddr>,
+	// Unstable
+	// #[arg(long)]
+	// pub listen: Option<std::net::SocketAddr>,
 
-	/// Program to attach to, program to start, etc
-	#[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+	/// Program to attach to or program to start. When spawning, extra arguments
+	/// will be forwarded to spawned program.
+	#[arg(trailing_var_arg = true, allow_hyphen_values = true, verbatim_doc_comment)]
 	pub args: Vec<String>,
+}
+
+impl Args {
+	pub fn sanity_check(&self) -> anyhow::Result<()> {
+		if self.check_update {
+			if let Ok(Some(version)) = check_latest::check_max!() {
+				let msg = format!("version {version} is now available!");
+				log::warn!("{msg}");
+				log::warn!("update with 'cargo install --force pai-inject-so'");
+				return Err(anyhow::Error::msg(msg));
+			} else {
+				log::debug!("already running newest version");
+			}
+		}
+		if self.args.is_empty() {
+			let msg = "need to pass a program to attach to or spawn";
+			log::warn!("{msg}");
+			return Err(anyhow::Error::msg(msg));
+		}
+		if self.inject.is_none() {
+			let msg = "no file passed in --inject";
+			log::warn!("{msg}");
+			return Err(anyhow::Error::msg(msg));
+		}
+		Ok(())
+	}
 }
