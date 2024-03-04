@@ -22,8 +22,9 @@ dependencies = ["update"]
 [tasks.createzips]
 env = { OUTNAME = "pai-inject-so" }
 
-[tasks.uploadrelease]
+[tasks.publishrelease]
 dependencies = [
+	{ name = "update" },
 	{ name = "publish" },
 	{ name = "createzips" },
 ]
