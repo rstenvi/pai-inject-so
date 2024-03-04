@@ -1,17 +1,31 @@
-[tasks.build]
-command = "cross"
-args = ["build", "--target-dir=output", "--target=${@}"]
+extend = [
+	# Build debug and release build [build|release]
+	{ path = "pai-make-targets/build.toml" },
 
+	# Fix formatting and clippy [fix|fixfmt|fixclippy|update|clippy]
+	{ path = "pai-make-targets/fix.toml" },
+
+	# Publish new crate on crates.io [publish|publishdry]
+	{ path = "pai-make-targets/publish.toml" },
+
+	# Test [test]
+	{ path = "pai-make-targets/test.toml" },
+
+	# Create a new release
+	{ path = "pai-make-targets/createrelease.toml" },
+]
+
+# Always update dependencies before a release build
 [tasks.release]
-command = "cross"
-dependencies = ["update", "fixfmt"]
-args = ["build", "--target-dir=output", "--release", "--target=${@}"]
+dependencies = ["update"]
 
-[tasks.fixfmt]
-install_crate = "rustfmt"
-command = "cargo"
-args = ["fmt", "--", "--emit=files"]
+[tasks.createzips]
+env = { OUTNAME = "pai-inject-so" }
 
-[tasks.update]
-command = "cargo"
-args = ["update"]
+[tasks.uploadrelease]
+dependencies = [
+	{ name = "publish" },
+	{ name = "createzips" },
+]
+command = "gh"
+args = [ "release", "create", "--prerelease", "--generate-notes", "--draft", "v${CARGO_MAKE_CRATE_VERSION}", "./release/${CARGO_MAKE_CRATE_VERSION}/*.zip" ]
