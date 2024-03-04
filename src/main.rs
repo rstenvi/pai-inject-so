@@ -19,6 +19,12 @@ fn main() -> Result<()> {
 	let mut ctx: ctx::Main<(), anyhow::Error> = ctx::Main::new_main(args.attach, prog, cargs, ())?;
 	let sec = ctx.secondary_mut();
 
+	// Some debugging we can enable
+	#[cfg(any())]
+	for (i, m) in sec.proc.maps()?.iter().enumerate() {
+		log::warn!("[{i}]: {m:?}");
+	}
+
 	// If we spawned the program, let it run until entry so that libraries
 	// (including libdl) are loaded.
 	if !args.attach {
@@ -36,9 +42,22 @@ fn main() -> Result<()> {
 
 	// Get a tid we can interact with and resolve dlopen
 	let tid = sec.get_first_stopped()?;
-	let dlopen = sec
-		.lookup_symbol_in_any("dlopen")?
+
+	let dlmod = if let Some(dlmod) = args.dlpath {
+		dlmod
+	} else {
+		#[cfg(target_os = "android")]
+		let ret = std::path::PathBuf::from("/system/lib64/libdl.so");
+
+		#[cfg(not(target_os = "android"))]
+		let ret = sec.try_find_libc_so()?;
+		ret
+	};
+	let dlmod = std::fs::canonicalize(dlmod)?;
+
+	let dlopen = sec.resolve_symbol_in_mod(&dlmod, "dlopen")?
 		.expect("unable to find dlopen");
+
 	log::info!("found dlopen @ {:x}", dlopen.value);
 
 	// Need to write our string to memory

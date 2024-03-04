@@ -54,6 +54,11 @@ pub struct Args {
 	#[arg(long, short, verbatim_doc_comment)]
 	pub r#override: Vec<String>,
 
+	/// Program will try and resolve dlopen in expected modules, but it may not
+	/// work correctly, use this option to override that behaviour.
+	#[arg(long, verbatim_doc_comment)]
+	pub dlpath: Option<PathBuf>,
+
 	// Unstable
 	// #[arg(long)]
 	// pub listen: Option<std::net::SocketAddr>,
