@@ -36,7 +36,9 @@ fn main() -> Result<()> {
 
 	// Get a tid we can interact with and resolve dlopen
 	let tid = sec.get_first_stopped()?;
-	let dlopen = sec.lookup_symbol_in_any("dlopen")?.expect("unable to find dlopen");
+	let dlopen = sec
+		.lookup_symbol_in_any("dlopen")?
+		.expect("unable to find dlopen");
 	log::info!("found dlopen @ {:x}", dlopen.value);
 
 	// Need to write our string to memory

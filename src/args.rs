@@ -57,10 +57,13 @@ pub struct Args {
 	// Unstable
 	// #[arg(long)]
 	// pub listen: Option<std::net::SocketAddr>,
-
 	/// Program to attach to or program to start. When spawning, extra arguments
 	/// will be forwarded to spawned program.
-	#[arg(trailing_var_arg = true, allow_hyphen_values = true, verbatim_doc_comment)]
+	#[arg(
+		trailing_var_arg = true,
+		allow_hyphen_values = true,
+		verbatim_doc_comment
+	)]
 	pub args: Vec<String>,
 }
 
