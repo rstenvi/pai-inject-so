@@ -4,32 +4,38 @@ A tool to inject shared object (SO) files into processes created using [pai](htt
 
 ## Install
 
-~~~
+~~~{.bash}
 cargo install --force pai-inject-so
 ~~~
 
-## Cross compile
+## Compile
 
 [cargo-make](https://github.com/sagiegurari/cargo-make) is used to control the
 build process. [cross](https://github.com/cross-rs/cross) is used to support
 cross-compilation. To simplify the build process, `cross` is used even when
 compiling for host target.
 
-The command to build targets are:
+The command to build for host target is:
 
-~~~
-cargo make [build|release] [target(s)]
+~~~{.bash}
+cargo make [build|release] [target]
 ~~~
 
 The output will be placed in `output/<target>/<debug|release>/pai-inject-so`.
 
-**Example for Android**
+### Cross-compile
 
-~~~
+Cross-compilation is sometimes as easy as described above, like this example for
+Android:
+
+~~~{.bash}
 $ cargo make release aarch64-linux-android
 $ ls output/aarch64-linux-android/release/pai-inject-so
 output/aarch64-linux-android/release/pai-inject-so
 ~~~
+
+Not all targets are supported in `cross` in those cases, we need to find an
+appropriate linker.
 
 ## Examples
 
