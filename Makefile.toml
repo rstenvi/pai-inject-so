@@ -15,14 +15,12 @@ extend = [
 	{ path = "pai-make-targets/createrelease.toml" },
 ]
 
-[tasks.createzips]
-env = { OUTNAME = "pai-inject-so" }
-
 [tasks.publishrelease]
+condition = { env_set = ["OUTNAME", "ZIPOUT"], fail_message = "publishrelease: necessary env not specified" }
 dependencies = [
 	{ name = "update" },
 	{ name = "publish" },
 	{ name = "createzips" },
 ]
 command = "gh"
-args = [ "release", "create", "--prerelease", "--generate-notes", "--draft", "v${CARGO_MAKE_CRATE_VERSION}", "./release/${CARGO_MAKE_CRATE_VERSION}/*.zip" ]
+args = [ "release", "create", "--prerelease", "--generate-notes", "--draft", "v${CARGO_MAKE_CRATE_VERSION}", "${ZIPOUT}/${OUTNAME}/zips/${CARGO_MAKE_CRATE_VERSION}/*.zip" ]
